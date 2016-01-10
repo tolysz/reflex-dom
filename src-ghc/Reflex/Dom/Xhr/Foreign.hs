@@ -1,7 +1,6 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 module Reflex.Dom.Xhr.Foreign where
 
-import Control.Lens.Indexed
 import qualified Data.Text as T
 import Data.Text (Text)
 import Data.Typeable (Typeable)
@@ -20,6 +19,9 @@ data XMLHttpRequest
                     , xhrContext :: JSContextRef
                     }
    deriving (Eq, Ord)
+
+data XhrResponseBody = XhrResponseBody { unXhrResponseBody :: JSValueRef }
+   deriving (Eq)
 
 responseTextToText :: Maybe String -> Maybe Text
 responseTextToText = fmap T.pack
@@ -87,6 +89,16 @@ xmlHttpRequestGetReadyState xhr = do
   rs <- jsevaluatescript c script (xhrValue xhr) nullPtr 1 nullPtr
   d <- jsvaluetonumber c rs nullPtr
   return $ truncate d
+
+xmlHttpRequestGetResponse :: XMLHttpRequest -> IO (Maybe XhrResponseBody)
+xmlHttpRequestGetResponse xhr = do
+  let c = xhrContext xhr
+  script <- jsstringcreatewithutf8cstring "this.response"
+  t <- jsevaluatescript c script (xhrValue xhr) nullPtr 1 nullPtr
+  isNull <- jsvalueisnull c t
+  case isNull of
+       True -> return Nothing
+       False ->  return $ Just $ XhrResponseBody t
 
 xmlHttpRequestGetResponseText :: XMLHttpRequest -> IO (Maybe String)
 xmlHttpRequestGetResponseText xhr = do
