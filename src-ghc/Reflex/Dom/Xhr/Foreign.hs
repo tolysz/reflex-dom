@@ -23,12 +23,6 @@ data XMLHttpRequest
 data XhrResponseBody = XhrResponseBody { unXhrResponseBody :: JSValueRef }
    deriving (Eq)
 
-responseTextToText :: Maybe String -> Maybe Text
-responseTextToText = fmap T.pack
-
-statusTextToText :: String -> Text
-statusTextToText = T.pack
-
 stringToJSValue :: JSContextRef -> String -> IO JSValueRef
 stringToJSValue ctx s = jsvaluemakestring ctx =<< jsstringcreatewithutf8cstring s
 
@@ -100,7 +94,7 @@ xmlHttpRequestGetResponse xhr = do
        True -> return Nothing
        False ->  return $ Just $ XhrResponseBody t
 
-xmlHttpRequestGetResponseText :: XMLHttpRequest -> IO (Maybe String)
+xmlHttpRequestGetResponseText :: XMLHttpRequest -> IO (Maybe Text)
 xmlHttpRequestGetResponseText xhr = do
   let c = xhrContext xhr
   script <- jsstringcreatewithutf8cstring "this.responseText"
@@ -114,7 +108,7 @@ xmlHttpRequestGetResponseText xhr = do
          s <- allocaBytes (fromIntegral l) $ \ps -> do
                 _ <- jsstringgetutf8cstring'_ j ps (fromIntegral l)
                 peekCString ps
-         return $ Just s
+         return $ Just $ T.pack s
 
 xmlHttpRequestSend :: XMLHttpRequest -> Maybe String -> IO ()
 xmlHttpRequestSend xhr payload = do
@@ -159,7 +153,7 @@ xmlHttpRequestGetStatus xhr = do
   d <- jsvaluetonumber c s nullPtr
   return $ truncate d
 
-xmlHttpRequestGetStatusText :: XMLHttpRequest -> IO String
+xmlHttpRequestGetStatusText :: XMLHttpRequest -> IO Text
 xmlHttpRequestGetStatusText xhr = do
   let c = xhrContext xhr
   script <- jsstringcreatewithutf8cstring "this.statusText"
@@ -169,4 +163,4 @@ xmlHttpRequestGetStatusText xhr = do
   s <- allocaBytes (fromIntegral l) $ \ps -> do
          _ <- jsstringgetutf8cstring'_ j ps (fromIntegral l)
          peekCString ps
-  return s
+  return $ T.pack s
