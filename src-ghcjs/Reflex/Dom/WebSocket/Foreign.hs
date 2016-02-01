@@ -6,6 +6,8 @@ import Prelude hiding (div, span, mapM, mapM_, concat, concatMap, all, sequence)
 
 import Data.ByteString (ByteString)
 import qualified Data.ByteString as BS
+import Data.Text as T
+import Data.Text.Encoding (encodeUtf8)
 import GHCJS.Types
 import GHCJS.DOM.WebSocket (message, closeEvent)
 import qualified GHCJS.DOM.WebSocket as GD
@@ -17,6 +19,8 @@ import Control.Monad.Reader
 import GHCJS.Buffer
 import JavaScript.TypedArray.ArrayBuffer as JS
 import GHCJS.Marshal.Pure
+import qualified GHCJS.Prim as Prim
+import GHCJS.Foreign
 
 data JSWebSocket = JSWebSocket { unWebSocket :: WebSocket }
 
@@ -27,8 +31,12 @@ newWebSocket _ url onMessage onClose = do
   _ <- on ws message $ do
     e <- ask
     d <- getData e
-    ab <- liftIO $ unsafeFreeze $ pFromJSVal d
-    liftIO $ onMessage $ toByteString 0 Nothing $ createFromArrayBuffer ab
+    if isString d
+      then
+        liftIO $ onMessage $ encodeUtf8 $ T.pack $ Prim.fromJSString d
+      else do
+        ab <- liftIO $ unsafeFreeze $ pFromJSVal d
+        liftIO $ onMessage $ toByteString 0 Nothing $ createFromArrayBuffer ab
   _ <- on ws closeEvent $ liftIO onClose
   return $ JSWebSocket ws
 
