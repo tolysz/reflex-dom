@@ -15,7 +15,7 @@ import Prelude hiding (all, concat, concatMap, div, mapM, mapM_, sequence, span)
 import Control.Monad.Reader
 import Data.Bifoldable
 import Data.ByteString (ByteString)
-import qualified Data.ByteString as B
+import qualified Data.ByteString.Char8 as B
 import Data.Text (Text)
 import qualified Data.Text as T (unpack)
 import Data.Text.Encoding
