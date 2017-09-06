@@ -15,6 +15,7 @@ import Prelude hiding (all, concat, concatMap, div, mapM, mapM_, sequence, span)
 import Control.Monad.Reader
 import Data.Bifoldable
 import Data.ByteString (ByteString)
+import qualified Data.ByteString as B
 import Data.Text (Text)
 import qualified Data.Text as T (unpack)
 import Data.Text.Encoding
@@ -40,9 +41,11 @@ instance (IsWebSocketMessage a, IsWebSocketMessage b) => IsWebSocketMessage (Eit
 -- Use binary websocket communication for ByteString
 -- Note: Binary websockets may not work correctly in IE 11 and below
 instance IsWebSocketMessage ByteString where
-  webSocketSend (JSWebSocket ws) bs = do
-    ab <- bsToArrayBuffer bs
-    DOM.send ws ab
+  webSocketSend (JSWebSocket ws) = DOM.sendString ws . B.unpack
+
+--  webSocketSend (JSWebSocket ws) bs = do
+--    ab <- bsToArrayBuffer bs
+--    DOM.send ws ab
 
 -- Use plaintext websocket communication for Text, and String
 instance IsWebSocketMessage Text where
